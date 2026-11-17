@@ -24,3 +24,14 @@ test('API configuration rejects unsafe protocols and embedded credentials',()=>{
  for(const v of ['javascript:alert(1)','http://remote.example.com','https://u:secret@api.example.com','https://api.example.com?token=secret'])assert.throws(()=>validBase(v));
  assert.equal(validBase('https://api.example.com/api/v1/'),'https://api.example.com/api/v1');assert.equal(validBase('http://localhost:3000/api/v1'),'http://localhost:3000/api/v1');
 });
+
+test('reload restores profile via cookie without persisted tokens',async()=>{
+ const calls=[]; const c=new ApiClient('https://api.example.com',async(url,options)=>{calls.push({url,options});return url.endsWith('/auth/refresh-tokens')?json({data:{accessToken:'restored'}}):json({data:{id:'admin',role:'ADMIN'}});});
+ assert.equal(await c.restoreSession(),true);assert.equal(c.session.user.role,'ADMIN');assert.equal(c.session.refreshToken,undefined);
+ assert.equal(calls[0].options.credentials,'include');assert.equal(calls[0].options.headers['X-Scribe-Session'],'cookie');assert.equal(calls[0].options.body,'{}');
+ assert.equal(calls[1].options.headers.Authorization,'Bearer restored');
+});
+test('expired cookie starts signed out; network failures remain distinguishable',async()=>{
+ const c=new ApiClient('https://api.example.com',async()=>json({message:'No browser session'},401));assert.equal(await c.restoreSession(),false);assert.equal(c.session,null);
+ const offline=new ApiClient('https://api.example.com',async()=>{throw Error('offline')});await assert.rejects(()=>offline.restoreSession(),/Cannot reach/);
+});
