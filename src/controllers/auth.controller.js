@@ -2,13 +2,14 @@
  * Authentication Controller
  */
 
+const { sessionResponse, clearSessionCookie } = require('../middleware/session.middleware');
 const authService = require('../services/auth.service');
 const { sendSuccess, sendCreated } = require('../utils/response');
 
 const register = async (req, res, next) => {
   try {
     const result = await authService.register(req.body);
-    sendCreated(res, result, 'Registration successful');
+    sendCreated(res, sessionResponse(req, res, result), 'Registration successful');
   } catch (error) {
     next(error);
   }
@@ -18,7 +19,7 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
-    sendSuccess(res, result, 'Login successful');
+    sendSuccess(res, sessionResponse(req, res, result), 'Login successful');
   } catch (error) {
     next(error);
   }
@@ -28,7 +29,7 @@ const refreshTokens = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     const tokens = await authService.refreshTokens(refreshToken);
-    sendSuccess(res, tokens, 'Tokens refreshed');
+    sendSuccess(res, sessionResponse(req, res, tokens), 'Tokens refreshed');
   } catch (error) {
     next(error);
   }
@@ -38,6 +39,7 @@ const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     await authService.logout(refreshToken);
+    if (req.cookieSession) clearSessionCookie(res);
     sendSuccess(res, null, 'Logged out successfully');
   } catch (error) {
     next(error);
@@ -66,6 +68,7 @@ const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+    clearSessionCookie(res);
     sendSuccess(res, result);
   } catch (error) {
     next(error);
