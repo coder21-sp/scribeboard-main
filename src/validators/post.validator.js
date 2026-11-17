@@ -10,7 +10,7 @@ const createPost = Joi.object({
   excerpt: Joi.string().max(500),
   coverImage: Joi.string().uri().allow(''),
   categoryId: Joi.string().uuid(),
-  tags: Joi.array().items(Joi.string().max(50)).max(10),
+  tags: Joi.array().items(Joi.string().trim().min(1).max(50)).max(10),
   allowComments: Joi.boolean(),
   metaTitle: Joi.string().max(60),
   metaDescription: Joi.string().max(160)
@@ -22,7 +22,7 @@ const updatePost = Joi.object({
   excerpt: Joi.string().max(500).allow(''),
   coverImage: Joi.string().uri().allow(''),
   categoryId: Joi.string().uuid().allow(null),
-  tags: Joi.array().items(Joi.string().max(50)).max(10),
+  tags: Joi.array().items(Joi.string().trim().min(1).max(50)).max(10),
   allowComments: Joi.boolean(),
   isFeatured: Joi.boolean(),
   isPinned: Joi.boolean(),

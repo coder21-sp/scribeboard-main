@@ -26,7 +26,7 @@ const getPosts = async (req, res, next) => {
 
 const getPost = async (req, res, next) => {
   try {
-    const post = await postService.getPost(req.params.id, true);
+    const post = await postService.getPost(req.params.id, true, req.user);
     sendSuccess(res, post);
   } catch (error) {
     next(error);

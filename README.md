@@ -256,3 +256,25 @@ MIT
 ---
 
 Made with ❤️ for content creators
+
+
+## Verified permissions and testing
+
+This API uses **PostgreSQL and Prisma**, not MongoDB. Public signup always creates an AUTHOR. Authors can manage their own posts and publish them; editors/admins can moderate comments. The current workflow permits authors to publish directly; review submission is optional, and scheduled publishing is not implemented.
+
+Drafts are visible by ID/slug only to their author or editors/admins. List/search filters preserve the public-or-own visibility rule. GET `/api/v1/posts/mine` lists the authenticated user's posts. Public comment responses omit guest email, IP address, user agent and moderator IDs. Comments require moderation unless `AUTO_APPROVE_COMMENTS=true`.
+
+Access and refresh tokens are unique and stored for revocation. Logout revokes all of that user's sessions; password changes revoke existing sessions too. Existing access tokens issued before this change are not in the token table: log in again after upgrading. No schema change is required.
+
+To run regression tests, create a disposable PostgreSQL database named `scribeboard_test`, set DATABASE_URL to it, then run:
+
+```sh
+npm ci
+npm run db:generate
+npm run db:push
+npm test
+```
+
+Never point tests or seed scripts at production data. Tests cover signup role injection, repeated login, draft visibility by ID/slug and query filters, edit ownership and rollback, tag responses, comment moderation/privacy, refresh-token races, logout and password revocation. Post edits update revisions and tags in the same transaction. Multi-field sorting is supported.
+
+For production, set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values of at least 32 characters. This repository is a backend API; it does not include a frontend.

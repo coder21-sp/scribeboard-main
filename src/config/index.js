@@ -32,7 +32,7 @@ const config = {
   // CORS
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
-    credentials: true
+    credentials: process.env.CORS_ORIGIN !== undefined && process.env.CORS_ORIGIN !== '*'
   },
   
   // Pagination defaults
@@ -40,38 +40,7 @@ const config = {
     defaultPage: 1,
     defaultLimit: 10,
     maxLimit: 100,
-    message: {
-      success: false,
-      error: { message: 'Too many requests', code: 'RATE_LIMITED', status: 429 },
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: true,
-    skipFailedRequests: true,
-    skip: (req, res) => {
-      return res.statusCode < 400;
-    },
-    keyGenerator: (req) => {
-      return req.ip;
-    },
-    handler: (req, res, next) => {
-      return res.status(429).json({
-        success: false,
-        error: { message: 'Too many requests', code: 'RATE_LIMITED', status: 429 },
-      });
-    },
-    onLimitReached: (req, res, next) => {
-      return res.status(429).json({
-        success: false,
-        error: { message: 'Too many requests', code: 'RATE_LIMITED', status: 429 },
-      });
-    },
-    onRateLimited: (req, res, next) => {
-      return res.status(429).json({
-        success: false,
-        error: { message: 'Too many requests', code: 'RATE_LIMITED', status: 429 },
-      });
-    },
+
   },
   
   // Content settings
@@ -87,4 +56,5 @@ const config = {
   }
 };
 
+if (config.env === 'production' && [process.env.JWT_ACCESS_SECRET, process.env.JWT_REFRESH_SECRET].some(s => !s || s.length < 32)) throw new Error('Set both JWT secrets to at least 32 characters');
 module.exports = config;

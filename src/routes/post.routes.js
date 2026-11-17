@@ -14,10 +14,11 @@ const router = express.Router();
 
 // Public routes (with optional auth for personalized results)
 router.get('/', optionalAuth, validateQuery(postValidator.queryPosts), postController.getPosts);
-router.get('/:id', postController.getPost);
+router.get('/mine', authenticate, postController.getMyPosts);
+router.get('/:id', optionalAuth, postController.getPost);
 
 // Post comments (public read, auth for create)
-router.get('/:postId/comments', commentController.getPostComments);
+router.get('/:postId/comments', validateQuery(commentValidator.queryComments), commentController.getPostComments);
 router.post('/:postId/comments', optionalAuth, validate(commentValidator.createComment), commentController.createComment);
 
 // Protected routes (Author+)

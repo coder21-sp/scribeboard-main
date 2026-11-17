@@ -14,7 +14,7 @@ const router = express.Router();
 router.post('/register', validate(authValidator.register), authController.register);
 router.post('/login', validate(authValidator.login), authController.login);
 router.post('/refresh-tokens', validate(authValidator.refreshTokens), authController.refreshTokens);
-router.post('/logout', authController.logout);
+router.post('/logout', validate(authValidator.refreshTokens), authController.logout);
 
 // Protected routes
 router.get('/profile', authenticate, authController.getProfile);
