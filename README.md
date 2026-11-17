@@ -278,3 +278,10 @@ npm test
 Never point tests or seed scripts at production data. Tests cover signup role injection, repeated login, draft visibility by ID/slug and query filters, edit ownership and rollback, tag responses, comment moderation/privacy, refresh-token races, logout and password revocation. Post edits update revisions and tags in the same transaction. Multi-field sorting is supported.
 
 For production, set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values of at least 32 characters. This repository is a backend API; it does not include a frontend.
+
+
+### Persistent browser sessions
+
+Browser clients send `X-Scribe-Session: cookie` and credentials with auth requests. The server requires an exact match with `CORS_ORIGIN`, places the rotating refresh token in an HttpOnly cookie, and omits it from browser JSON responses. Production cookies are Secure, SameSite=None, Partitioned, scoped to `/api/v1/auth`, and expire with the refresh JWT. This supports the frontend/API on separate Render sites in browsers supporting partitioned cookies. Access tokens stay in memory; reload calls refresh then profile. Logout revokes all user sessions and expires the cookie. Legacy explicit JSON refresh-token clients remain supported. No database migration is needed. Existing users must sign in once after this release to establish the cookie.
+
+Validation: 7 backend tests, 8 frontend/client tests, and a real Chromium cross-site HTTPS reload/second-tab/logout check passed against a disposable PostgreSQL database.

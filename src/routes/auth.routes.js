@@ -8,13 +8,15 @@ const { authenticate } = require('../middleware/auth.middleware');
 const { validate } = require('../middleware/validate.middleware');
 const authValidator = require('../validators/auth.validator');
 
+const { browserSession, readRefreshCookie } = require('../middleware/session.middleware');
 const router = express.Router();
+router.use(browserSession);
 
 // Public routes
 router.post('/register', validate(authValidator.register), authController.register);
 router.post('/login', validate(authValidator.login), authController.login);
-router.post('/refresh-tokens', validate(authValidator.refreshTokens), authController.refreshTokens);
-router.post('/logout', validate(authValidator.refreshTokens), authController.logout);
+router.post('/refresh-tokens', readRefreshCookie, validate(authValidator.refreshTokens), authController.refreshTokens);
+router.post('/logout', readRefreshCookie, validate(authValidator.refreshTokens), authController.logout);
 
 // Protected routes
 router.get('/profile', authenticate, authController.getProfile);
