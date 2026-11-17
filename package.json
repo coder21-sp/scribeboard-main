@@ -11,7 +11,8 @@
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "node prisma/seed.js",
     "db:studio": "npx prisma studio",
-    "setup": "npm install && npm run db:generate && npm run db:push && npm run db:seed"
+    "setup": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
+    "test": "node --test tests/api.test.js"
   },
   "keywords": [
     "blog",
@@ -37,7 +38,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "prisma": "^5.7.1"
+    "prisma": "^5.7.1",
+    "supertest": "^7.3.2"
   },
   "engines": {
     "node": ">=18.0.0"

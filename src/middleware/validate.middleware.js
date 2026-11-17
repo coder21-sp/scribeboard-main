@@ -6,7 +6,7 @@ const AppError = require('../utils/AppError');
 
 const validate = (schema) => {
   return (req, res, next) => {
-    const { error } = schema.validate(req.body, {
+    const { error, value } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true
     });
@@ -20,13 +20,14 @@ const validate = (schema) => {
       return next(new AppError('Validation failed', 400));
     }
     
+    req.body = value;
     next();
   };
 };
 
 const validateQuery = (schema) => {
   return (req, res, next) => {
-    const { error } = schema.validate(req.query, {
+    const { error, value } = schema.validate(req.query, {
       abortEarly: false,
       stripUnknown: true
     });
@@ -35,13 +36,14 @@ const validateQuery = (schema) => {
       return next(new AppError('Invalid query parameters', 400));
     }
     
+    req.query = value;
     next();
   };
 };
 
 const validateParams = (schema) => {
   return (req, res, next) => {
-    const { error } = schema.validate(req.params, {
+    const { error, value } = schema.validate(req.params, {
       abortEarly: false,
       stripUnknown: true
     });
@@ -50,6 +52,7 @@ const validateParams = (schema) => {
       return next(new AppError('Invalid URL parameters', 400));
     }
     
+    req.params = value;
     next();
   };
 };

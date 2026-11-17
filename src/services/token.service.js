@@ -4,6 +4,7 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { randomUUID } = require('crypto');
 const config = require('../config');
 const { prisma } = require('../config/database');
 const AppError = require('../utils/AppError');
@@ -16,7 +17,7 @@ const generateAccessToken = (user) => {
     {
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role, type: 'access', jti: randomUUID()
     },
     config.jwt.accessSecret,
     { expiresIn: config.jwt.accessExpiresIn }
@@ -30,7 +31,7 @@ const generateRefreshToken = (user) => {
   return jwt.sign(
     {
       userId: user.id,
-      type: 'refresh'
+      type: 'refresh', jti: randomUUID()
     },
     config.jwt.refreshSecret,
     { expiresIn: config.jwt.refreshExpiresIn }
@@ -55,15 +56,18 @@ const generateTokens = async (user) => {
     }
   });
   
+  await prisma.token.create({ data: { token: accessToken, type: 'ACCESS', userId: user.id, expiresAt: new Date(jwt.decode(accessToken).exp * 1000) } });
   return { accessToken, refreshToken };
 };
 
 /**
  * Verify access token
  */
-const verifyAccessToken = (token) => {
+const verifyAccessToken = async (token) => {
   try {
-    return jwt.verify(token, config.jwt.accessSecret);
+    const decoded = jwt.verify(token, config.jwt.accessSecret);
+    if (decoded.type !== 'access' || !await prisma.token.findFirst({ where: { token, type: 'ACCESS', isRevoked: false, expiresAt: { gt: new Date() } } })) throw AppError.unauthorized('Session revoked');
+    return decoded;
   } catch (error) {
     throw AppError.unauthorized('Invalid or expired token');
   }

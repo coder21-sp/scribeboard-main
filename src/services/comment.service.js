@@ -1,3 +1,4 @@
+function publicComment(comment) { const { guestEmail, ipAddress, userAgent, moderatedBy, ...safe } = comment; if (safe.replies) safe.replies = safe.replies.map(publicComment); return safe; }
 /**
  * Comment Service
  * Comment CRUD and moderation system
@@ -67,7 +68,8 @@ const createComment = async (postId, data, userId = null, ipInfo = {}) => {
   }
   
   // Determine initial status
-  const status = config.comments.autoApprove || userId ? 'APPROVED' : 'PENDING';
+  if (!userId && (!guestName || !guestEmail)) throw AppError.badRequest('Guest name and email are required');
+  const status = config.comments.autoApprove ? 'APPROVED' : 'PENDING';
   
   const comment = await prisma.comment.create({
     data: {
@@ -95,7 +97,7 @@ const createComment = async (postId, data, userId = null, ipInfo = {}) => {
     }
   });
   
-  return comment;
+  return publicComment(comment);
 };
 
 /**
@@ -107,10 +109,10 @@ const getPostComments = async (postId, query = {}) => {
   // Check if post exists
   const post = await prisma.post.findUnique({
     where: { id: postId },
-    select: { id: true }
+    select: { id: true, status: true }
   });
   
-  if (!post) {
+  if (!post || post.status !== 'PUBLISHED') {
     throw AppError.notFound('Post not found');
   }
   
@@ -154,7 +156,7 @@ const getPostComments = async (postId, query = {}) => {
   ]);
   
   return {
-    comments,
+    comments: comments.map(publicComment),
     pagination: buildPaginationResponse(total, page, limit)
   };
 };
@@ -214,6 +216,7 @@ const approveComment = async (commentId, moderatorId) => {
     where: { id: commentId },
     data: {
       status: 'APPROVED',
+      isSpam: false,
       moderatedAt: new Date(),
       moderatedBy: moderatorId
     }

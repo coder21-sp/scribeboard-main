@@ -112,7 +112,7 @@ const parseSort = (sortQuery, allowedFields = ['createdAt', 'updatedAt', 'title'
     }
   }
   
-  return Object.keys(sortOrder).length > 0 ? sortOrder : { createdAt: 'desc' };
+  return Object.keys(sortOrder).length > 0 ? Object.entries(sortOrder).map(([field, direction]) => ({ [field]: direction })) : { createdAt: 'desc' };
 };
 
 module.exports = {

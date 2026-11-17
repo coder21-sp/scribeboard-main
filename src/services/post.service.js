@@ -17,8 +17,9 @@ const {
 /**
  * Create new post (draft)
  */
-const createPost = async (authorId, data) => {
-  const { title, content, excerpt, coverImage, categoryId, tags, allowComments, metaTitle, metaDescription } = data;
+const createPostInternal = async (authorId, data, prisma) => {
+  const { title, content, excerpt, coverImage, categoryId, tags: rawTags, allowComments, metaTitle, metaDescription } = data;
+  const tags = rawTags === undefined ? undefined : [...new Map(rawTags.map(t => [t.trim().toLowerCase().replace(/\s+/g, '-'), t.trim()])).values()];
   
   // Generate unique slug
   const slug = await generateUniqueSlug(title, 'post', prisma);
@@ -73,6 +74,8 @@ const createPost = async (authorId, data) => {
   return post;
 };
 
+const createPost = (authorId, data) => prisma.$transaction(tx => createPostInternal(authorId, data, tx));
+
 /**
  * Get posts with filters
  */
@@ -90,25 +93,10 @@ const getPosts = async (query = {}, userId = null) => {
   } = query;
   
   // Build where clause
-  const where = {};
+  const where = { AND: [userId ? { OR: [{ status: 'PUBLISHED' }, { authorId: userId }] } : { status: 'PUBLISHED' }] };
   
-  // For public: only show published posts
-  // For authors: show their own posts regardless of status
-  if (userId) {
-    where.OR = [
-      { status: 'PUBLISHED' },
-      { authorId: userId }
-    ];
-  } else {
-    where.status = 'PUBLISHED';
-  }
-  
-  // Apply filters
-  if (status && userId) {
-    where.status = status;
-    delete where.OR;
-  }
-  
+  if (status) where.status = status;
+
   if (authorId) {
     where.authorId = authorId;
   }
@@ -174,7 +162,7 @@ const getPosts = async (query = {}, userId = null) => {
 /**
  * Get single post by ID or slug
  */
-const getPost = async (identifier, incrementView = false) => {
+const getPost = async (identifier, incrementView = false, user = null) => {
   const post = await prisma.post.findFirst({
     where: {
       OR: [
@@ -200,6 +188,8 @@ const getPost = async (identifier, incrementView = false) => {
     throw AppError.notFound('Post not found');
   }
   
+  if (post.status !== 'PUBLISHED' && post.authorId !== user?.id && !['ADMIN', 'EDITOR'].includes(user?.role)) throw AppError.notFound('Post not found');
+
   // Increment view count
   if (incrementView && post.status === 'PUBLISHED') {
     await prisma.post.update({
@@ -215,7 +205,7 @@ const getPost = async (identifier, incrementView = false) => {
 /**
  * Update post
  */
-const updatePost = async (postId, authorId, data, userRole) => {
+const updatePostInternal = async (postId, authorId, data, userRole, prisma) => {
   const post = await prisma.post.findUnique({ where: { id: postId } });
   
   if (!post) {
@@ -227,7 +217,8 @@ const updatePost = async (postId, authorId, data, userRole) => {
     throw AppError.forbidden('You can only edit your own posts');
   }
   
-  const { title, content, excerpt, coverImage, categoryId, tags, allowComments, isFeatured, isPinned, metaTitle, metaDescription } = data;
+  const { title, content, excerpt, coverImage, categoryId, tags: rawTags, allowComments, isFeatured, isPinned, metaTitle, metaDescription } = data;
+  const tags = rawTags === undefined ? undefined : [...new Map(rawTags.map(t => [t.trim().toLowerCase().replace(/\s+/g, '-'), t.trim()])).values()];
   
   // Generate new slug if title changed
   let slug = post.slug;
@@ -297,8 +288,10 @@ const updatePost = async (postId, authorId, data, userRole) => {
     }
   }
   
-  return updatedPost;
+  return prisma.post.findUnique({ where: { id: postId }, include: { author: { select: { id: true, firstName: true, lastName: true, avatar: true } }, category: true, tags: { include: { tag: true } } } });
 };
+
+const updatePost = (id, author, data, role) => prisma.$transaction(tx => updatePostInternal(id, author, data, role, tx));
 
 /**
  * Publish post

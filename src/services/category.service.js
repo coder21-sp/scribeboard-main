@@ -38,7 +38,7 @@ const getCategories = async (query = {}) => {
   const { page, limit, skip } = parsePagination(query);
   const { includeInactive = false, withPostCount = false } = query;
   
-  const where = includeInactive ? {} : { isActive: true };
+  const where = includeInactive === true || includeInactive === 'true' ? {} : { isActive: true };
   
   const [categories, total] = await Promise.all([
     prisma.category.findMany({
@@ -46,7 +46,7 @@ const getCategories = async (query = {}) => {
       skip,
       take: limit,
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      ...(withPostCount && {
+      ...((withPostCount === true || withPostCount === 'true') && {
         include: {
           _count: {
             select: { posts: { where: { status: 'PUBLISHED' } } }

@@ -19,6 +19,8 @@ const errorHandler = (err, req, res, next) => {
     message = 'Record not found';
   }
   
+  if (err.code === 'P2003') { statusCode = 400; message = 'Invalid related record'; }
+  if (statusCode >= 500 && config.env === 'production') message = 'Internal Server Error';
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;

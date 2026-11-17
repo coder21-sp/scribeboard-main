@@ -18,7 +18,7 @@ const authenticate = async (req, res, next) => {
     }
     
     const token = authHeader.split(' ')[1];
-    const decoded = tokenService.verifyAccessToken(token);
+    const decoded = await tokenService.verifyAccessToken(token);
     
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -57,7 +57,7 @@ const optionalAuth = async (req, res, next) => {
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const decoded = tokenService.verifyAccessToken(token);
+      const decoded = await tokenService.verifyAccessToken(token);
       
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },

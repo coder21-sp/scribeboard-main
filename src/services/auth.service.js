@@ -34,7 +34,7 @@ const register = async (userData) => {
       password: hashedPassword,
       firstName,
       lastName,
-      role: role === 'ADMIN' ? 'AUTHOR' : role // Only super admin can create admins
+      role: 'AUTHOR' // Public signup cannot assign privileged roles
     },
     select: {
       id: true,
@@ -98,7 +98,8 @@ const refreshTokens = async (refreshToken) => {
   const decoded = await tokenService.verifyRefreshToken(refreshToken);
   
   // Revoke old token
-  await tokenService.revokeToken(refreshToken);
+  const consumed = await prisma.token.updateMany({ where: { token: refreshToken, type: 'REFRESH', isRevoked: false }, data: { isRevoked: true } });
+  if (consumed.count !== 1) throw AppError.unauthorized('Refresh token already used');
   
   // Get user
   const user = await prisma.user.findUnique({
@@ -116,9 +117,7 @@ const refreshTokens = async (refreshToken) => {
 /**
  * Logout user
  */
-const logout = async (refreshToken) => {
-  await tokenService.revokeToken(refreshToken);
-};
+const logout = async (refreshToken) => { const decoded = await tokenService.verifyRefreshToken(refreshToken); await tokenService.revokeAllUserTokens(decoded.userId); };
 
 /**
  * Get user profile

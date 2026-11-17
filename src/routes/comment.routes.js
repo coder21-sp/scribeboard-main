@@ -11,6 +11,7 @@ const commentValidator = require('../validators/comment.validator');
 const router = express.Router();
 
 // All routes require Editor/Admin role
+router.delete('/:id', authenticate, commentController.deleteComment);
 router.use(authenticate, editorOrAdmin);
 
 // Comment management
@@ -21,6 +22,6 @@ router.get('/stats', commentController.getCommentStats);
 router.post('/:id/approve', commentController.approveComment);
 router.post('/:id/reject', commentController.rejectComment);
 router.post('/:id/spam', commentController.markAsSpam);
-router.delete('/:id', commentController.deleteComment);
+
 
 module.exports = router;
