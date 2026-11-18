@@ -11,7 +11,7 @@ A responsive reading room and writing dashboard for the ScribeBoard Express/Post
 - Public comments and an editor/admin moderation queue
 - Separate, clearly labeled demo mode with tab-scoped sample data
 - API connection settings, loading/empty/error states, unsaved-change prompts
-- In-memory login tokens and single-flight refresh-token rotation
+- In-memory access tokens, HttpOnly refresh cookies, and single-flight refresh-token rotation
 - Responsive navigation, native form labels, keyboard focus styles, and live feedback
 
 ## Run locally
@@ -37,7 +37,7 @@ Use the ScribeBoard backend with the security/session fixes in PR #1 applied. St
 
 A hosted HTTPS frontend needs an HTTPS backend. A localhost API address only works on the machine running that backend, subject to browser local-network restrictions. Configure and test local development from a local frontend origin.
 
-The frontend does not deploy or provision the backend/database. The API address is saved locally per browser. Demo mode never pretends that sample posts are live server data. Real tokens remain in memory; reload requires another sign-in. Backend logout revokes all sessions for that account.
+The frontend does not deploy or provision the backend/database. The API address is saved locally per browser. Demo mode never pretends that sample posts are live server data. Access tokens remain in memory; an HttpOnly refresh cookie restores login after reload. Backend logout revokes all sessions for that account.
 
 The editor intentionally handles plain text, with paragraphs and line breaks. Existing HTML content is displayed as text rather than executed. Rich text, uploads, password-reset email, scheduling, user administration, and category management are outside this version's scope. The backend must enforce permissions; hiding UI controls is not an authorization boundary.
 
@@ -66,5 +66,7 @@ It exercises the actual frontend API client against Express and PostgreSQL, crea
 ## Hosting
 
 Deploy `dist/` to any static host. Hash routing requires no server fallback configuration. `.openai/hosting.json` identifies the private Sites deployment; omit that file if using another host. No backend secrets belong in frontend source.
+
+Browser sessions require an exact backend CORS_ORIGIN matching the frontend origin, credentialed requests, and the X-Scribe-Session header. Modern browser support for Secure partitioned cookies is needed when the frontend and API are on different sites. Sign in once after upgrading to establish the cookie.
 
 Validation performed: five client/DOM tests and the real API integration test passed. Visual browser QA was unavailable in the build environment; verify mobile layouts and your deployment's CORS configuration in a browser before making the app public.
