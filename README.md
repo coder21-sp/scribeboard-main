@@ -1,17 +1,24 @@
-# 📝 ScribeBoard API
+# 📝 ScribeBoard
 
-A full-fledged **Blog CMS Backend Service** with authors, posts, categories, comments, drafts, and publishing workflows.
+A full-stack blog CMS with a responsive writing interface, a REST API, role-based publishing workflows, and secure browser sessions. The frontend and backend are deployed separately on Render from this repository, while application data is stored in PostgreSQL.
+
+## 🌐 Live Application
+
+- **Frontend:** https://scribeboard-urif.onrender.com
+- **API:** https://scribeboard-api.onrender.com/api/v1
 
 ## ✨ Features
 
 - **User Roles**: Admin, Editor, Author, Reader
-- **Blog Posts**: Full CRUD with rich content support
+- **Blog Posts**: Full CRUD with safe plain-text content
 - **Publishing Workflow**: Draft → Review → Publish → Unpublish
 - **Categories & Tags**: Organize content effectively
 - **Comment System**: Nested comments with moderation
 - **Search & Filter**: Find posts by category, tag, author, or keyword
 - **Pagination**: Efficient data loading
 - **Revision History**: Track post changes
+- **Responsive Frontend**: Explore stories, write drafts, publish, and moderate comments
+- **Persistent Login**: Secure HttpOnly refresh cookie restores browser sessions after reload
 
 ## 🛠️ Tech Stack
 
@@ -22,6 +29,7 @@ A full-fledged **Blog CMS Backend Service** with authors, posts, categories, com
 | PostgreSQL | Database |
 | Prisma | ORM |
 | JWT | Authentication |
+| HTML, CSS & JavaScript | Responsive Frontend |
 | Joi | Validation |
 | Helmet | Security |
 
@@ -36,8 +44,8 @@ A full-fledged **Blog CMS Backend Service** with authors, posts, categories, com
 
 ```bash
 # Clone repository
-git clone https://github.com/q225/scribeboard.git
-cd scribeboard
+git clone https://github.com/coder21-sp/scribeboard-main.git
+cd scribeboard-main
 
 # Run setup script
 chmod +x setup.sh
@@ -73,13 +81,11 @@ npm run db:seed
 npm run dev
 ```
 
-## 🔐 Test Accounts
+## 🖥️ Frontend
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@scribeboard.com | Admin@123 |
-| Editor | editor@scribeboard.com | Admin@123 |
-| Author | author@scribeboard.com | Admin@123 |
+The production-ready static frontend is in `frontend/dist`. It connects to the deployed API by default and includes public reading and search, account registration and login, draft editing, publishing, comment moderation for editors/admins, and persistent login after page refresh.
+
+Open `frontend/dist/index.html` through a local HTTP server for development. Use the Settings screen to connect it to another ScribeBoard API deployment.
 
 ## 📡 API Endpoints
 
@@ -178,7 +184,11 @@ scribeboard/
 │   ├── validators/        # Joi schemas
 │   ├── app.js             # Express app
 │   └── server.js          # Entry point
-├── .env.example
+├── frontend/
+│   ├── dist/              # Deployable frontend
+│   └── tests/             # Frontend and integration tests
+├── env.example
+├── tests/                 # API integration tests
 ├── package.json
 └── README.md
 ```
@@ -277,7 +287,7 @@ npm test
 
 Never point tests or seed scripts at production data. Tests cover signup role injection, repeated login, draft visibility by ID/slug and query filters, edit ownership and rollback, tag responses, comment moderation/privacy, refresh-token races, logout and password revocation. Post edits update revisions and tags in the same transaction. Multi-field sorting is supported.
 
-For production, set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values of at least 32 characters. This repository is a backend API; it does not include a frontend.
+For production, set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values of at least 32 characters. The static frontend is served from `frontend/dist` and must use an API origin allowed by `CORS_ORIGIN`.
 
 
 ### Persistent browser sessions
